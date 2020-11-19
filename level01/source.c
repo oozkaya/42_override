@@ -27,7 +27,7 @@ int verify_user_name(void)
 
 int main(int argc, char **argv)
 {
-    char buf[48];
+    char buf[0x48];
     int isIncorrect;
 
     memset(buf, '\0', 0x10);

@@ -3,6 +3,8 @@
 NAME="override"
 VM_PORT="4242"
 
+CURDIR=`dirname $0`
+
 # set -x
 VM_NAME=`VBoxManage list vms | grep -i $NAME | head -1 | grep -oP '\"\K[^" ]+'`
 if [ -z "$VM_NAME" ]; then
@@ -21,7 +23,9 @@ echo "Waiting for the IP..."
 n=0
 until [ "$n" -ge 60 ]
 do
-    VM_IP=`VBoxManage guestproperty enumerate $VM_NAME | grep -i ip | grep -ioP 'value: \K[^,]+'`
+    MAC_ADDRESS=`VBoxManage showvminfo $VM_NAME | grep -oP 'MAC: \K[^",]+' | sed -e 's/[0-9A-F]\{2\}/&:/g' -e 's/:$//'`
+    VM_IP=`ip neighbor | grep -i $MAC_ADDRESS | cut -d' ' -f1`
+    # VM_IP=`VBoxManage guestproperty enumerate $VM_NAME | grep -i ip | grep -ioP 'value: \K[^,]+'`
     if [ -n "$VM_IP" ]; then break; fi
     n=$((n+1)) 
     sleep 1
@@ -31,6 +35,7 @@ if [ -z "$VM_IP" ]; then
     exit 1;
 fi
 
-echo -e "You should set its IP as environment variable\n"
+echo -e "You should set its IP as environment variable and then install utils\n"
 echo "export OR_HOST=$VM_IP"
 echo "export OR_PORT=$VM_PORT"
+echo "$CURDIR/installUtils.sh"

