@@ -1,5 +1,6 @@
 /* source: https://www.hacktion.be/buffer-overflow-variable-environnement/ */
-/* gcc getenv.c -o getenv*/
+/* gcc getenv.c -o getenv64*/
+/* gcc -m32 getenv.c -o getenv32*/
 
 #include <stdio.h>
 #include <stdlib.h>

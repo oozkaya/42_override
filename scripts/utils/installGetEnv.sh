@@ -19,7 +19,8 @@ function install {
 
     sshpass -e \
     ssh -q -p $OR_PORT $OR_USER@$OR_HOST 'bash -x' << EOI
-        gcc /tmp/getenv.c -o /tmp/getenv
+        gcc /tmp/getenv.c -o /tmp/getenv64
+        gcc -m32 /tmp/getenv.c -o /tmp/getenv32
         chmod 777 /tmp/getenv*
 EOI
 }

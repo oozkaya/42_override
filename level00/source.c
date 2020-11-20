@@ -1,5 +1,5 @@
-// 64bit, executable stack, no stack protector
-// gcc -g -z execstack -z norelro -fno-stack-protector source.c
+// 32bit, executable stack, no stack protector
+// gcc -m32 -g -z execstack -z norelro -fno-stack-protector source.c
 
 #include <stdio.h>
 #include <stdlib.h>

