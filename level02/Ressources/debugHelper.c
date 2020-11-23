@@ -1,6 +1,6 @@
 // https://catonmat.net/simple-ld-preload-tutorial-part-two
-// gcc -Wall -fPIC -shared -o helpDebug.so helpDebug.c -ldl
-// export LD_PRELOAD=/tmp/helpDebug.so
+// gcc -shared -fPIC -ldl debugHelper.c -o debugHelper.so
+// export LD_PRELOAD=/tmp/debugHelper.so
 
 #define _GNU_SOURCE
 
