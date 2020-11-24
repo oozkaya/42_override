@@ -32,7 +32,7 @@ int main(int argc, char **argv)
     int key = 0;
     char *buff;
 
-    while (key <= 0x14)
+    while (key <= 0x15)
     {
         buff = (char *)malloc(20);
         xor_reverse(buff, key);

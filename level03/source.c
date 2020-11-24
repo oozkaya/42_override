@@ -40,7 +40,7 @@ void test(int input, int ref)
     int key;
 
     key = ref - input;
-    if (key <= 0x14) // 20
+    if (key <= 0x15) // 21
         // asm volatile("jmp *%0" : : "r"((key << 2) + 0x80489f0));
         decrypt(key);
     else

@@ -47,7 +47,7 @@ If the uncipher text is "Congratulations!", a shell is executed.
 
 We need to find the key and then add the constant `0x1337d00d`
 
-We know the key is less or equal than `0x14`
+We know the key is less or equal than `0x15`
 
 We wrote a [C-program](./reverse.c) to reverse the binary. Lets execute it:
 
