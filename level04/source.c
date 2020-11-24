@@ -19,12 +19,10 @@
 // int puts(const char *s);
 // pid_t wait(int *status);
 
-#define DEATH_ON_SIGNAL_VALUE 1
-
 int main(int argc, char **argv)
 {
     pid_t pid;
-    char buf[100];
+    char buf[136];
     int child_user_content;
     int status;
 
@@ -32,28 +30,31 @@ int main(int argc, char **argv)
     memset(buf, '\0', 0x20);
     child_user_content = 0;
     status = 0;
-    if (pid)
+    if (pid == 0)
     {
-        prctl(PR_SET_PDEATHSIG, DEATH_ON_SIGNAL_VALUE);
+        prctl(PR_SET_PDEATHSIG, SIGHUP);
         ptrace(PTRACE_TRACEME, NULL, NULL, NULL);
         puts("Give me some shellcode, k");
         gets(buf);
         return 0;
     }
-    while (child_user_content != 0xb)
+    else
     {
-        wait(&status);
-        pid_t isStatusEqualsZero = status & 0x7f == 0;
-        pid_t isStatusGreaterThanZero = (((status & 0x7f) + 1) / 2) > 0;
-        if (isStatusEqualsZero || isStatusGreaterThanZero)
+        while (child_user_content != 0xb)
         {
-            puts("child is exiting...");
-            return 0;
+            wait(&status);
+            pid_t isStatusEqualsZero = status & 0x7f == 0;
+            pid_t isStatusGreaterThanZero = (((status & 0x7f) + 1) / 2) > 0;
+            if (isStatusEqualsZero || isStatusGreaterThanZero)
+            {
+                puts("child is exiting...");
+                return 0;
+            }
+            child_user_content = ptrace(PTRACE_PEEKUSER, pid, 0x2c, NULL);
         }
-        child_user_content = ptrace(PTRACE_PEEKUSER, pid, 0x2c, NULL);
+        puts("no exec() for you");
+        kill(pid, SIGKILL);
     }
-    puts("no exec() for you");
-    kill(pid, SIGKILL);
     return 0;
 }
 
