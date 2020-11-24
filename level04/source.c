@@ -44,8 +44,8 @@ int main(int argc, char **argv)
     {
         wait(&status);
         pid_t isStatusEqualsZero = status & 0x7f == 0;
-        pid_t isStatusGreaterThan64 = (status & 0x7f + 1) / 2;
-        if (isStatusEqualsZero || isStatusGreaterThan64)
+        pid_t isStatusGreaterThanZero = (((status & 0x7f) + 1) / 2) > 0;
+        if (isStatusEqualsZero || isStatusGreaterThanZero)
         {
             puts("child is exiting...");
             return 0;
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 //    0x0804878a <+194>:   test   eax,eax                       # status & 0x7 == 0
 //    0x0804878c <+196>:   je     0x80487ac <main+228>
 //    0x0804878e <+198>:   mov    eax,DWORD PTR [esp+0x1c]      # status
-//    0x08048792 <+202>:   mov    DWORD PTR [esp+0xa4],eax      # isStatusGreaterThan64
+//    0x08048792 <+202>:   mov    DWORD PTR [esp+0xa4],eax      # isStatusGreaterThanZero
 //    0x08048799 <+209>:   mov    eax,DWORD PTR [esp+0xa4]
 //    0x080487a0 <+216>:   and    eax,0x7f                      # status & 0x7f
 //    0x080487a3 <+219>:   add    eax,0x1                       # + 1
