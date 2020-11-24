@@ -145,7 +145,7 @@ $ cat /home/users/level03/.pass
   Hh74RPnuQ9sa5JAEXgNWCqz7sXGnh5J5M9KfPg3H
 ```
 
-Another solution :
+## Another solution with printf
 
 We have printf exploit possibility as our buffer is used as the first argument of printf, we can bring our own modifiers. We can use that to print the stack starting from the printf function since we can't debug with gdb because of fopen issues etc...
 
@@ -164,7 +164,7 @@ Let's check that :
 ```
 
 Ok, with the %p modifier we can see that our buffer "AAAA" starts at the 8th argument.
-We also know that our password buffer starts at `[rbp-0x110]` in the stack and the flag starts at `[rbp-0xa0]` => difference of 0x70 = 112 bytes.
+We also know that our password buffer starts at `[rbp-0x110]` in the stack and the flag starts at `[rbp-0xa0]` => difference of 0x70 = 112 bytes.  
 Since `%p` is printing a maximum of 8 bytes long arguments, the flag argument position will be after 14 arguments (112 / 8 = 14), which means the 22th (our password is 8th, so 14 + 8 = 22)
 
 ```shell
