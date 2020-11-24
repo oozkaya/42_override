@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LEVEL="02"
+LEVEL="04"
 
 CURDIR=`dirname "$(readlink -f "$0")"`
 
@@ -22,7 +22,7 @@ if [ -z ${OR_PORT+x} ]; then read -p "VM Port: " OR_PORT; fi
 echo -e "$USER password is: $CURR_FLAG\n"
 (set -x
     $SSHPASS \
-    scp -q -P $OR_PORT -r $CURDIR/debugHelper.c $USER@$OR_HOST:/tmp/debugHelper02.c
+    scp -q -P $OR_PORT -r $CURDIR/reverse.c $USER@$OR_HOST:/tmp/reverse03.c
     $SSHPASS \
     ssh -q -p $OR_PORT $USER@$OR_HOST 'bash' < $CURDIR/script.sh
 )

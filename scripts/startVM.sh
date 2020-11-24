@@ -31,7 +31,8 @@ do
     sleep 1
 done
 if [ -z "$VM_IP" ]; then
-    echo "Failed to get the IP. Please try again"
+    echo -e "Failed to get the IP. Please run the following command and try again\n"
+    echo "sudo service virtualbox restart"
     exit 1;
 fi
 

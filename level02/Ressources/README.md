@@ -5,13 +5,12 @@
 Requirements:
 
 - `gdb-peda`
-- `getenv64`
 
 You can setup requirements with the script: [scripts/installUtils.sh](../../scripts/installUtils.sh)
 
 ```shell
 ./scripts/installUtils.sh
-./level01/Ressources/main.sh
+./level02/Ressources/main.sh
 ```
 
 ## Passwords and token
@@ -19,7 +18,7 @@ You can setup requirements with the script: [scripts/installUtils.sh](../../scri
 |         |                                            |
 | ------- | ------------------------------------------ |
 | level02 | `PwBLgNa8p8MTKW57S7zxVAQCxnCpV8JqTTs9XEBv` |
-| level02 | `Hh74RPnuQ9sa5JAEXgNWCqz7sXGnh5J5M9KfPg3H` |
+| level03 | `Hh74RPnuQ9sa5JAEXgNWCqz7sXGnh5J5M9KfPg3H` |
 
 ## Steps to resolve on VM
 
