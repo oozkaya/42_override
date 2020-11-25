@@ -19,16 +19,18 @@
 // int puts(const char *s);
 // pid_t wait(int *status);
 
+#define SYS_EXECVE 11
+
 int main(int argc, char **argv)
 {
     pid_t pid;
     char buf[136];
-    int child_user_content;
+    int syscall;
     int status;
 
     pid = fork();
     memset(buf, '\0', 0x20);
-    child_user_content = 0;
+    syscall = 0;
     status = 0;
     if (pid == 0)
     {
@@ -40,17 +42,17 @@ int main(int argc, char **argv)
     }
     else
     {
-        while (child_user_content != 0xb)
+        while (syscall != SYS_EXECVE) // 11 execve  cat /usr/include/asm/unistd_32.h | grep execve
         {
             wait(&status);
-            pid_t isStatusEqualsZero = status & 0x7f == 0;
-            pid_t isStatusGreaterThanZero = (((status & 0x7f) + 1) / 2) > 0;
-            if (isStatusEqualsZero || isStatusGreaterThanZero)
+            int isExitStatus = status & 0x7f == 0;                 // <sys/wait.h> WIFEXITED -> terminated because of exit, _exit or main return
+            int isSignalStatus = (((status & 0x7f) + 1) >> 1) > 0; // <sys/wait.h> WIFSIGNALED -> terminated because of signal
+            if (isExitStatus || isSignalStatus)
             {
                 puts("child is exiting...");
                 return 0;
             }
-            child_user_content = ptrace(PTRACE_PEEKUSER, pid, 0x2c, NULL);
+            syscall = ptrace(PTRACE_PEEKUSER, pid, 0x2c, NULL);
         }
         puts("no exec() for you");
         kill(pid, SIGKILL);
@@ -73,7 +75,7 @@ int main(int argc, char **argv)
 //    0x080486f0 <+40>:    mov    edi,ebx
 //    0x080486f2 <+42>:    mov    ecx,edx
 //    0x080486f4 <+44>:    rep stos DWORD PTR es:[edi],eax      # => memset(buf ,'\0', 0x20);
-//    0x080486f6 <+46>:    mov    DWORD PTR [esp+0xa8],0x0      # child_user_content
+//    0x080486f6 <+46>:    mov    DWORD PTR [esp+0xa8],0x0      # syscall
 //    0x08048701 <+57>:    mov    DWORD PTR [esp+0x1c],0x0      # status
 //    0x08048709 <+65>:    cmp    DWORD PTR [esp+0xac],0x0      # cmp pid, 0
 //    0x08048711 <+73>:    jne    0x8048769 <main+161>
@@ -96,13 +98,13 @@ int main(int argc, char **argv)
 //    0x0804876d <+165>:   mov    DWORD PTR [esp],eax
 //    0x08048770 <+168>:   call   0x80484f0 <wait@plt>          # wait(&status);
 //    0x08048775 <+173>:   mov    eax,DWORD PTR [esp+0x1c]      # status
-//    0x08048779 <+177>:   mov    DWORD PTR [esp+0xa0],eax      # isStatusEqualsZero
+//    0x08048779 <+177>:   mov    DWORD PTR [esp+0xa0],eax      # isExitStatus
 //    0x08048780 <+184>:   mov    eax,DWORD PTR [esp+0xa0]
 //    0x08048787 <+191>:   and    eax,0x7f                      # status & 0x7
 //    0x0804878a <+194>:   test   eax,eax                       # status & 0x7 == 0
 //    0x0804878c <+196>:   je     0x80487ac <main+228>
 //    0x0804878e <+198>:   mov    eax,DWORD PTR [esp+0x1c]      # status
-//    0x08048792 <+202>:   mov    DWORD PTR [esp+0xa4],eax      # isStatusGreaterThanZero
+//    0x08048792 <+202>:   mov    DWORD PTR [esp+0xa4],eax      # isSignalStatus
 //    0x08048799 <+209>:   mov    eax,DWORD PTR [esp+0xa4]
 //    0x080487a0 <+216>:   and    eax,0x7f                      # status & 0x7f
 //    0x080487a3 <+219>:   add    eax,0x1                       # + 1
@@ -118,9 +120,9 @@ int main(int argc, char **argv)
 //    0x080487d1 <+265>:   mov    DWORD PTR [esp+0x4],eax
 //    0x080487d5 <+269>:   mov    DWORD PTR [esp],0x3           # PTRACE_PEEKUSER
 //    0x080487dc <+276>:   call   0x8048570 <ptrace@plt>        # ptrace(PTRACE_PEEKUSER, pid, 0x2c, NULL);
-//    0x080487e1 <+281>:   mov    DWORD PTR [esp+0xa8],eax      # child_user_content
-//    0x080487e8 <+288>:   cmp    DWORD PTR [esp+0xa8],0xb      # cmp child_user_content, 0xb
-//    0x080487f0 <+296>:   jne    0x8048768 <main+160>          # while child_user_content != 0xb
+//    0x080487e1 <+281>:   mov    DWORD PTR [esp+0xa8],eax      # syscall
+//    0x080487e8 <+288>:   cmp    DWORD PTR [esp+0xa8],0xb      # cmp syscall, 0xb
+//    0x080487f0 <+296>:   jne    0x8048768 <main+160>          # while syscall != 0xb
 //    0x080487f6 <+302>:   mov    DWORD PTR [esp],0x8048931     # "no exec() for you"
 //    0x080487fd <+309>:   call   0x8048500 <puts@plt>          # puts("no exec() for you");
 //    0x08048802 <+314>:   mov    DWORD PTR [esp+0x4],0x9       # SIGKILL

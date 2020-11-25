@@ -22,9 +22,7 @@ if [ -z ${OR_PORT+x} ]; then read -p "VM Port: " OR_PORT; fi
 echo -e "$USER password is: $CURR_FLAG\n"
 (set -x
     $SSHPASS \
-    scp -q -P $OR_PORT -r $CURDIR/reverse.c $USER@$OR_HOST:/tmp/reverse03.c
-    $SSHPASS \
-    ssh -q -p $OR_PORT $USER@$OR_HOST 'bash' < $CURDIR/script.sh
+    ssh -q -p $OR_PORT $USER@$OR_HOST 'bash -s -' < $CURDIR/script.sh
 )
 
 # Check flag password and token
