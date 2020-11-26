@@ -1,4 +1,4 @@
-# Level04 - 32 bits -
+# Level04 - 32 bits - Can't use execve
 
 ## Local script usage
 
@@ -77,7 +77,18 @@ And finally use the exploit :
 
 - [What does the “rep stos” x86 assembly instruction sequence do?](https://stackoverflow.com/questions/3818856/what-does-the-rep-stos-x86-assembly-instruction-sequence-do)
 - ['Open/Read + pathname' shellcode](http://shell-storm.org/shellcode/files/shellcode-73.php)
+- [FR - Ecrivez votre premier shellcode en asm x86 ! (Exemple 2 : execve(/bin/sh))](https://zestedesavoir.com/articles/158/ecrivez-votre-premier-shellcode-en-asm-x86/#2-exemple-2-execve-bin-sh)
+
 ### C
+
+- [PTRACE_TRACEME](http://manpagesfr.free.fr/man/man2/ptrace.2.html)
+- [ret2libc](https://beta.hackndo.com/retour-a-la-libc/)
+
+#### Questions
+
+- [how does ptrace catch fork's system call?](https://stackoverflow.com/questions/20440118/how-does-ptrace-catch-forks-system-call)
+
+#### Man
 
 - [Man fork](https://linux.die.net/man/3/fork)
 - [Man gets](https://linux.die.net/man/3/gets)
