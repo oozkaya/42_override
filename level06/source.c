@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 //    0x08048759 <+17>:	    mov    DWORD PTR [esp],eax                  login
 //    0x0804875c <+20>:	    call   0x8048520 <strcspn@plt>              strcspn(login, "\n")
 //    0x08048761 <+25>:	    add    eax,DWORD PTR [ebp+0x8]
-//    0x08048764 <+28>:	    mov    BYTE PTR [eax],0x0                   login[strcspn()] = '\0'
+//    0x08048764 <+28>:	    mov    BYTE PTR [eax],0x0                   login[strcspn(...)] = '\0'
 //    0x08048767 <+31>:	    mov    DWORD PTR [esp+0x4],0x20             0x20
 //    0x0804876f <+39>:	    mov    eax,DWORD PTR [ebp+0x8]
 //    0x08048772 <+42>:	    mov    DWORD PTR [esp],eax                  login
