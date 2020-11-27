@@ -79,9 +79,9 @@ int main(int argc, char **argv)
 //    0x08048918 <+159>:	call   0x8048510 <printf@plt>               printf("-> Enter Serial: ")
 //    0x0804891d <+164>:	mov    eax,0x8048a60                        "%u"
 //    0x08048922 <+169>:	lea    edx,[esp+0x28]                       serial
-//    0x08048926 <+173>:	mov    DWORD PTR [esp+0x4],edx              int* serial
+//    0x08048926 <+173>:	mov    DWORD PTR [esp+0x4],edx              unsigned int serial
 //    0x0804892a <+177>:	mov    DWORD PTR [esp],eax                  "%u"
-//    0x0804892d <+180>:	call   0x80485e0 <__isoc99_scanf@plt>       scanf("%u", serial)
+//    0x0804892d <+180>:	call   0x80485e0 <__isoc99_scanf@plt>       scanf("%u", &serial)
 //    0x08048932 <+185>:	mov    eax,DWORD PTR [esp+0x28]
 //    0x08048936 <+189>:	mov    DWORD PTR [esp+0x4],eax              serial
 //    0x0804893a <+193>:	lea    eax,[esp+0x2c]
