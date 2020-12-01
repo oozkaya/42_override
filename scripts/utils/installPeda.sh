@@ -4,6 +4,10 @@ PEDA_LOCAL_PATH="/tmp/peda"
 PEDA_REMOTE_PATH="/tmp/peda"
 GDBINIT_REMOTE_PATH="/tmp/.gdbinit"
 
+if dpkg -s sshpass >/dev/null 2>&1; then
+    SSHP="sshpass -e"
+fi
+
 function install {
     if [ -z ${OR_HOST+x} ]; then read -p "VM Host: " OR_HOST; fi
     if [ -z ${OR_PORT+x} ]; then read -p "VM Port: " OR_PORT; fi
@@ -19,11 +23,11 @@ function install {
     git clone https://github.com/longld/peda.git $PEDA_LOCAL_PATH
 
     # copy peda folder to VM
-    sshpass -e \
+    $SSHP \
     scp -q -P $OR_PORT -r $PEDA_LOCAL_PATH $OR_USER@$OR_HOST:$PEDA_REMOTE_PATH
 
     # create .gdbinit file in /tmp folder
-    sshpass -e \
+    $SSHP \
     ssh -q -p $OR_PORT $OR_USER@$OR_HOST << EOI
         echo "source $PEDA_REMOTE_PATH/peda.py" >> $GDBINIT_REMOTE_PATH
         echo "Done! To use gdb-peda run: "
