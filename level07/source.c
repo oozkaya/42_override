@@ -1,9 +1,8 @@
 // 32bit, executable stack, no stack protector
 // gcc -m32 -g -z execstack source.c
 
+#include <string.h>
 #include <stdio.h>
-#include <sys/ptrace.h>
-#include <errno.h>
 
 void clear_stdin(void)
 {
@@ -35,15 +34,16 @@ int store_number(int *data)
     nb = get_unum();
     printf(" Index: ");
     index = get_unum();
-    calc = ((index * 0xaaaaaaab) >> 1) * 3;
-    if (index - calc == 0 || nb >> 24 == 183)
+    int isForbiddenIndex = index % 3 == 0;
+    int nbFirstByte = nb >> 24;
+    if (isForbiddenIndex || nbFirstByte == 0xb7)
     {
         puts(" *** ERROR! ***");
         puts("   This index is reserved for wil!");
         puts(" *** ERROR! ***");
         return 1;
     }
-    data[index << 2] = nb;
+    data[index] = nb; // *data + index * 4
     return 0;
 }
 
@@ -52,7 +52,7 @@ int read_number(int *data)
     unsigned int index = 0;
 
     printf(" Index: ");
-    index = get_unum() << 2;
+    index = get_unum();
     printf(" Number at data[%u] is %u\n", index, data[index]);
     return 0;
 }
@@ -63,7 +63,7 @@ int main(int argc, char **argv, char **envp)
     char **envvars = envp;
     int ret = 0;
     char buf[20];
-    int data[100];
+    int data[25];
 
     memset(data, '\0', 100);
     while (arguments)
@@ -161,13 +161,13 @@ int main(int argc, char **argv, char **envp)
 //    0x0804866e <+62>:	mov    ecx,DWORD PTR [ebp-0xc]          # index;
 //    0x08048671 <+65>:	mov    edx,0xaaaaaaab
 //    0x08048676 <+70>:	mov    eax,ecx
-//    0x08048678 <+72>:	mul    edx                              # edx = index * 0xaaaaaaab
+//    0x08048678 <+72>:	mul    edx                              # edx = (index * 0xaaaaaaab) >> 1 => edx / 3
 //    0x0804867a <+74>:	shr    edx,1                            # >> 1
 //    0x0804867c <+76>:	mov    eax,edx
 //    0x0804867e <+78>:	add    eax,eax                          # eax * 2
 //    0x08048680 <+80>:	add    eax,edx                          # + eax => eax * 3
 //    0x08048682 <+82>:	mov    edx,ecx                          # edx = index
-//    0x08048684 <+84>:	sub    edx,eax                          # edx = index - (((index * 0xaaaaaaab) >> 1) * 3)
+//    0x08048684 <+84>:	sub    edx,eax                          # edx = edx - (((edx * 0xaaaaaaab) >> 1) * 3) => modulo 3
 //    0x08048686 <+86>:	test   edx,edx                          # == 0
 //    0x08048688 <+88>:	je     0x8048697 <store_number+103>
 //    0x0804868a <+90>:	mov    eax,DWORD PTR [ebp-0x10]         # nb
@@ -184,9 +184,9 @@ int main(int argc, char **argv, char **envp)
 //    0x080486c0 <+144>:	jmp    0x80486d5 <store_number+165>
 //    0x080486c2 <+146>:	mov    eax,DWORD PTR [ebp-0xc]      # index
 //    0x080486c5 <+149>:	shl    eax,0x2                      # << 2
-//    0x080486c8 <+152>:	add    eax,DWORD PTR [ebp+0x8]      # data[index << 2]
+//    0x080486c8 <+152>:	add    eax,DWORD PTR [ebp+0x8]      # data + (index * 4)
 //    0x080486cb <+155>:	mov    edx,DWORD PTR [ebp-0x10]     # nb
-//    0x080486ce <+158>:	mov    DWORD PTR [eax],edx          # data[index << 2] = nb
+//    0x080486ce <+158>:	mov    DWORD PTR [eax],edx          # data[index] = nb
 //    0x080486d0 <+160>:	mov    eax,0x0
 //    0x080486d5 <+165>:	leave
 //    0x080486d6 <+166>:	ret
@@ -203,7 +203,7 @@ int main(int argc, char **argv, char **envp)
 //    0x080486f6 <+31>:	mov    DWORD PTR [ebp-0xc],eax          # index = get_unum
 //    0x080486f9 <+34>:	mov    eax,DWORD PTR [ebp-0xc]          # index
 //    0x080486fc <+37>:	shl    eax,0x2                          # << 2
-//    0x080486ff <+40>:	add    eax,DWORD PTR [ebp+0x8]          # + data
+//    0x080486ff <+40>:	add    eax,DWORD PTR [ebp+0x8]          # data + index * 4
 //    0x08048702 <+43>:	mov    edx,DWORD PTR [eax]              # data[index]
 //    0x08048704 <+45>:	mov    eax,0x8048b1b                    # " Number at data[%u] is %u\n"
 //    0x08048709 <+50>:	mov    DWORD PTR [esp+0x8],edx          #
