@@ -4,6 +4,10 @@ CURDIR=`dirname $0`
 GETENV_PATH="$CURDIR/getenv.c" 
 DEST="/tmp"
 
+if dpkg -s sshpass >/dev/null 2>&1; then
+    SSHP="sshpass -e"
+fi
+
 function install {
     if [ -z ${OR_HOST+x} ]; then read -p "VM Host: " OR_HOST; fi
     if [ -z ${OR_PORT+x} ]; then read -p "VM Port: " OR_PORT; fi
@@ -14,10 +18,10 @@ function install {
 
     set -x
 
-    sshpass -e \
+    $SSHP \
     scp -q -P $OR_PORT -r $GETENV_PATH $OR_USER@$OR_HOST:$DEST
 
-    sshpass -e \
+    $SSHP \
     ssh -q -p $OR_PORT $OR_USER@$OR_HOST 'bash -x' << EOI
         gcc /tmp/getenv.c -o /tmp/getenv64
         gcc -m32 /tmp/getenv.c -o /tmp/getenv32

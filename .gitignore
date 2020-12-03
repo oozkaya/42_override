@@ -1,3 +1,4 @@
 *.iso
 Override
 *.log
+.gdb_history

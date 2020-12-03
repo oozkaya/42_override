@@ -20,6 +20,11 @@ function install {
     fi
 }
 
+if dpkg -s sshpass >/dev/null 2>&1; then
+    echo "sshpass is already installed"
+    exit 1
+fi
+
 read -p "Do you want install sshpass on local machine ? [yY] " -n 1 -r
 if [[ $REPLY =~ ^[yY]$ ]]; then
     echo
