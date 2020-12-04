@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 typedef struct s_msg
 {
@@ -59,6 +60,7 @@ void handle_msg(void)
     set_username(msg);
     set_msg(msg);
     puts(">: Msg sent!");
+    return;
 }
 
 int main(void)
