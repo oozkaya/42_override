@@ -1,5 +1,5 @@
 // 64bit, executable stack, no stack protector
-// gcc -g -z execstack -z norelro -fno-stack-protector source.c
+// gcc -g -z execstack -z norelro -fno-stack-protector -Wno-format source.c
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@ int log_wrapper(FILE *stream, char *str, char *arg)
     strcpy(cpy, str);
     len = strlen(cpy);
     snprintf(&cpy[len], 254 - len, arg);
-    cpy[strcspn(cpy, "\n")] = "\0";
+    cpy[strcspn(cpy, "\n")] = '\0';
     fprintf(stream, "LOG: %s\n", cpy);
 }
 
